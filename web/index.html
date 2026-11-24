@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BATHYS — MK-IV Abyssal Piloted Exploration Submersible</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- Engraved Depth Gauge Loader -->
+    <div id="loader-overlay" class="loader-overlay">
+      <div class="gauge-wrap">
+        <svg class="depth-gauge" viewBox="0 0 240 240" aria-label="Depth gauge loader">
+          <defs>
+            <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#f3dfba" />
+              <stop offset="50%" stop-color="#c9a567" />
+              <stop offset="100%" stop-color="#7c6236" />
+            </linearGradient>
+          </defs>
+          <circle cx="120" cy="120" r="110" fill="#06080c" stroke="url(#goldGrad)" stroke-width="1.5" opacity="0.9" />
+          <circle cx="120" cy="120" r="98" fill="none" stroke="rgba(201,165,103,0.22)" stroke-width="1" stroke-dasharray="2 6" />
+          <g id="gauge-ticks" stroke="rgba(225,205,165,0.55)" stroke-width="1.2"></g>
+          <text x="120" y="68" text-anchor="middle" fill="#c9a567" font-family="Cinzel, serif" font-size="11" letter-spacing="4">BATHYS</text>
+          <text x="120" y="166" text-anchor="middle" fill="rgba(220,228,238,0.65)" font-family="Space Mono, monospace" font-size="10" letter-spacing="2" id="loader-depth-text">0000 M</text>
+          <g id="gauge-needle" transform="rotate(-130 120 120)">
+            <line x1="120" y1="128" x2="120" y2="34" stroke="url(#goldGrad)" stroke-width="2.2" stroke-linecap="round" />
+            <circle cx="120" cy="120" r="6" fill="#0b0e14" stroke="url(#goldGrad)" stroke-width="2" />
+          </g>
+        </svg>
+        <div class="loader-caption">CALIBRATING PRESSURE HULL · <span id="loader-pct">0%</span></div>
+      </div>
+    </div>
+
+    <!-- Real-time 3D Ocean Viewport -->
+    <main id="ocean-stage" class="ocean-stage">
+      <canvas id="bathys-canvas"></canvas>
+
+      <!-- Opening Click-to-Illuminate Prompt -->
+      <div id="illuminate-prompt" class="illuminate-prompt hidden">
+        <span class="prompt-ring"></span>
+        <span class="prompt-label">Click to illuminate</span>
+      </div>
+
+      <!-- Hero Copy Overlay -->
+      <section id="hero-overlay" class="hero-overlay">
+        <div class="hero-kicker">— 4,000M PILOTED RECONNAISSANCE CRAFT</div>
+        <h1 class="hero-title">BATHYS</h1>
+        <p class="hero-desc">
+          Sculpted in carbon-titanium composite with a panoramic acrylic pressure dome and whisper-quiet vectored thrusters—engineered to cross the midnight zone in complete stillness.
+        </p>
+        <button id="hero-cta" class="hero-cta">
+          <span>EXPLORE THE SUBMERSIBLE</span>
+          <span class="cta-arrow">→</span>
+        </button>
+        <div class="hero-hint">DRAG TO ORBIT · SCROLL TO ADVANCE</div>
+      </section>
+
+      <!-- Camera Move Contextual Caption (Steps 1 & 2) -->
+      <div id="tour-caption" class="tour-caption">
+        <div class="tour-kicker" id="tour-kicker"></div>
+        <h2 class="tour-heading" id="tour-heading"></h2>
+        <p class="tour-body" id="tour-body"></p>
+      </div>
+
+      <!-- Bottom Logo Strip (Left-to-Right Ticker) -->
+      <div id="logo-strip" class="logo-strip">
+        <div class="logo-track">
+          <div class="logo-group">
+            <span>◈ NAUTILUS INSTITUTE</span>
+            <span>△ TRITON TELEMETRY</span>
+            <span>⊕ HADAL DYNAMICS</span>
+            <span>◇ MARIANA LABS</span>
+            <span>◉ PELAGIC OPTICS</span>
+            <span>❖ BENTHIC ENGINEERING</span>
+            <span>∿ ABYSSAL SURVEY</span>
+          </div>
+          <div class="logo-group" aria-hidden="true">
+            <span>◈ NAUTILUS INSTITUTE</span>
+            <span>△ TRITON TELEMETRY</span>
+            <span>⊕ HADAL DYNAMICS</span>
+            <span>◇ MARIANA LABS</span>
+            <span>◉ PELAGIC OPTICS</span>
+            <span>❖ BENTHIC ENGINEERING</span>
+            <span>∿ ABYSSAL SURVEY</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Playable Exploration HUD -->
+      <div id="dive-hud" class="dive-hud">
+        <div class="telemetry-bar">
+          <div class="telemetry-cell">
+            <span class="t-label">VELOCITY</span>
+            <span class="t-value" id="hud-speed">0.0 KTS</span>
+          </div>
+          <div class="telemetry-cell">
+            <span class="t-label">HEADING</span>
+            <span class="t-value" id="hud-heading">000° N</span>
+          </div>
+          <div class="telemetry-cell">
+            <span class="t-label">DEPTH</span>
+            <span class="t-value" id="hud-depth">3,842 M</span>
+          </div>
+          <div class="telemetry-cell">
+            <span class="t-label">VIEW</span>
+            <span class="t-value" id="hud-view">CHASE</span>
+          </div>
+        </div>
+
+        <div id="location-card" class="location-card">
+          <div class="loc-tag" id="loc-tag"></div>
+          <div class="loc-title" id="loc-title"></div>
+          <p class="loc-desc" id="loc-desc"></p>
+        </div>
+
+        <div class="key-guides">
+          <span><kbd>W</kbd> move forward</span>
+          <span class="dot">·</span>
+          <span><kbd>A</kbd>/<kbd>D</kbd> steer</span>
+          <span class="dot">·</span>
+          <span><kbd>E</kbd> switch view</span>
+          <span id="cockpit-click-hint" class="hidden"><span class="dot">·</span> Click dash switch for beams</span>
+        </div>
+
+        <button id="scroll-archive-cue" class="scroll-archive-cue">
+          <span>Scroll to Dive Archive</span>
+          <span class="cue-chevron">↓</span>
+        </button>
+      </div>
+
+      <!-- Shrinking Oval Transition Mask to Dive Archive -->
+      <div id="oval-transition" class="oval-transition" aria-hidden="true">
+        <svg class="oval-rim-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <ellipse id="oval-rim-ellipse" cx="50" cy="50" rx="70" ry="70" fill="none" stroke="rgba(222,192,138,0.75)" stroke-width="0.28" />
+        </svg>
+      </div>
+    </main>
+
+    <!-- Slim Top Header (stays above both Ocean & Archive stages) -->
+    <header id="top-header" class="top-header">
+      <div class="brand-lockup">
+        <span class="brand-wordmark">BATHYS</span>
+        <span class="brand-divider">|</span>
+        <span class="brand-sub">MK-IV ABYSSAL</span>
+      </div>
+      <nav class="stage-nav" aria-label="Experience stages">
+        <button type="button" class="nav-pill active" data-stage="0">I VESSEL</button>
+        <button type="button" class="nav-pill" data-stage="1">II VIEWPORT</button>
+        <button type="button" class="nav-pill" data-stage="2">III HULL</button>
+        <button type="button" class="nav-pill" data-stage="3">IV DIVE</button>
+        <button type="button" class="nav-pill" data-stage="4">V ARCHIVE</button>
+      </nav>
+      <button type="button" id="header-sound-btn" class="sound-toggle" aria-label="Toggle sound">
+        <span class="sound-bars"><i></i><i></i><i></i></span>
+        <span class="sound-label">SOUND ON</span>
+      </button>
+    </header>
+
+    <!-- Full-Screen Dive Archive Section + Footer -->
+    <section id="archive-section" class="archive-section" aria-label="Dive Archive">
+      <canvas id="cursor-trail-canvas" class="cursor-trail-canvas"></canvas>
+
+      <div class="archive-stage" id="archive-stage">
+        <!-- Peeking Previous Entry -->
+        <div class="archive-peek archive-peek-prev" id="peek-prev">
+          <img id="peek-prev-img" alt="" />
+        </div>
+        <!-- Peeking Next Entry -->
+        <div class="archive-peek archive-peek-next" id="peek-next">
+          <img id="peek-next-img" alt="" />
+        </div>
+
+        <div class="archive-header-bar">
+          <span class="archive-label">DIVE ARCHIVE · LOGBOOK MK-IV</span>
+          <div class="archive-counter" id="archive-counter">01 / 04</div>
+        </div>
+
+        <div class="archive-grid">
+          <!-- Left: Wide Cinematic Image Card with Curved-Glass Hover -->
+          <div class="archive-card-col">
+            <div class="glass-card" id="archive-glass-card">
+              <div class="glass-card-inner" id="archive-card-inner">
+                <img id="archive-main-img" src="" alt="" />
+                <div class="glass-rim-highlight" id="glass-rim-highlight"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Center: Compact Title & Action -->
+          <div class="archive-meta-col" id="archive-meta-col">
+            <div class="archive-entry-index" id="archive-entry-index">ENTRY 01</div>
+            <h2 class="archive-entry-title" id="archive-entry-title">The Vessel</h2>
+            <p class="archive-entry-sub" id="archive-entry-sub"></p>
+            <button class="archive-view-btn" id="archive-view-btn">
+              <span>View entry</span>
+              <span>→</span>
+            </button>
+            <div class="archive-dots" id="archive-dots"></div>
+          </div>
+
+          <!-- Right: Smaller Square Emblem Tile -->
+          <div class="archive-emblem-col">
+            <div class="emblem-tile" id="archive-emblem-tile">
+              <div class="emblem-svg-wrap" id="archive-emblem-svg"></div>
+              <div class="emblem-caption" id="archive-emblem-caption"></div>
+              <div class="emblem-glint" id="emblem-glint"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="archive-nav-hint">SCROLL OR SWIPE TO BROWSE ENTRIES</div>
+      </div>
+
+      <!-- Compact Charcoal Footer -->
+      <footer id="bathys-footer" class="bathys-footer">
+        <div class="footer-left">
+          <div class="footer-wordmark">BATHYS</div>
+          <p class="footer-desc">4,000m Carbon-Titanium Piloted Exploration Submersible · MK-IV Abyssal</p>
+        </div>
+        <div class="footer-actions">
+          <button id="footer-return-ocean" class="footer-btn primary">Return to ocean</button>
+          <button id="footer-back-top" class="footer-btn">Back to top</button>
+          <button id="footer-sound-btn" class="sound-toggle">
+            <span class="sound-bars"><i></i><i></i><i></i></span>
+            <span class="sound-label">SOUND ON</span>
+          </button>
+        </div>
+      </footer>
+    </section>
+
+    <!-- Field Note Modal for "View entry" -->
+    <div id="entry-modal" class="entry-modal hidden" role="dialog" aria-modal="true">
+      <div class="entry-modal-backdrop" id="modal-backdrop"></div>
+      <div class="entry-modal-panel">
+        <button class="modal-close" id="modal-close" aria-label="Close entry">✕</button>
+        <div class="modal-image-wrap">
+          <img id="modal-img" src="" alt="" />
+        </div>
+        <div class="modal-content">
+          <div class="modal-kicker" id="modal-kicker"></div>
+          <h3 class="modal-title" id="modal-title"></h3>
+          <p class="modal-note" id="modal-note"></p>
+          <div class="modal-specs" id="modal-specs"></div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

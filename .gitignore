@@ -1,0 +1,14 @@
+# Dependencies & build output
+web/node_modules/
+web/dist/
+
+# Blender backup files
+*.blend1
+*.blend2
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
